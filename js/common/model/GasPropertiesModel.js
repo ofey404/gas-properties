@@ -248,8 +248,8 @@ define( require => {
       // Collision detection and response
       this.collisionDetector.update();
 
-      // Remove particles that have left the model bounds
-      this.particleSystem.removeParticlesOutOfBounds( this.modelBoundsProperty.value );
+      // Remove particles that have floated off the top of the screen
+      this.particleSystem.removeParticlesAboveBounds( this.modelBoundsProperty.value );
 
       // Do this after collision detection, so that the number of collisions detected has been recorded.
       this.collisionCounter && this.collisionCounter.step( dt );

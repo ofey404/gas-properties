@@ -12,6 +12,7 @@ define( require => {
   // modules
   const BooleanProperty = require( 'AXON/BooleanProperty' );
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const ParticleSystem = require( 'GAS_PROPERTIES/common/model/ParticleSystem' );
   const Property = require( 'AXON/Property' );
 
@@ -124,7 +125,7 @@ define( require => {
         'numberOfSamples should be 1 if called while the sim is paused' );
 
       // heavy particles
-      if ( this.particleSystem.heavyParticles.length === 0 ) {
+      if ( this.particleSystem.heavyParticles.lengthProperty.value === 0 ) {
         this.heavyAverageSpeedProperty.value = null;
       }
       else {
@@ -132,7 +133,7 @@ define( require => {
       }
 
       // light particles
-      if ( this.particleSystem.lightParticles.length === 0 ) {
+      if ( this.particleSystem.lightParticles.lengthProperty.value === 0 ) {
         this.lightAverageSpeedProperty.value = null;
       }
       else {
@@ -146,19 +147,20 @@ define( require => {
 
   /**
    * Gets the average speed for a set of particles, in pm/ps.
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @returns {number} 0 if there are no particles
    */
   function getAverageSpeed( particles ) {
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
     let averageSpeed = 0;
-    if ( particles.length > 0 ) {
+    const array = particles.getArray(); // use raw array for performance
+    if ( array.length > 0 ) {
       let totalSpeed = 0;
-      for ( let i = 0; i < particles.length; i++ ) {
-        totalSpeed += particles[ i ].velocity.magnitude;
+      for ( let i = 0; i < array.length; i++ ) {
+        totalSpeed += array[ i ].velocity.magnitude;
       }
-      averageSpeed = totalSpeed / particles.length;
+      averageSpeed = totalSpeed / array.length;
     }
     return averageSpeed;
   }

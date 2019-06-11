@@ -20,6 +20,7 @@ define( require => {
   const HeavyParticle = require( 'GAS_PROPERTIES/common/model/HeavyParticle' );
   const LightParticle = require( 'GAS_PROPERTIES/common/model/LightParticle' );
   const NumberProperty = require( 'AXON/NumberProperty' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const ParticleUtils = require( 'GAS_PROPERTIES/common/model/ParticleUtils' );
   const Vector2 = require( 'DOT/Vector2' );
 
@@ -48,14 +49,21 @@ define( require => {
       this.collisionsEnabledProperty = collisionsEnabledProperty;
       this.particleEntryLocation = particleEntryLocation;
 
-      // @public (read-only) together these arrays make up the 'particle system'
       // Separate arrays are kept to optimize performance.
-      this.heavyParticles = []; // {HeavyParticle[]} heavy particles inside the container
-      this.lightParticles = []; // {LightParticle[]} light particles inside the container
-      this.heavyParticlesOutside = []; // {HeavyParticle[]} heavy particles outside the container
-      this.lightParticlesOutside = []; // {LightParticle[]} light particles outside the container
 
-      // @public performance optimization, for iterating over all particles inside the container
+      // @public (read-only) {ObservableArray.<HeavyParticle>} heavy particles inside the container
+      this.heavyParticles = new ObservableArray( [] );
+
+      // @public (read-only) {ObservableArray.<LightParticle>} light particles inside the container
+      this.lightParticles = new ObservableArray( [] );
+
+      // @public (read-only) {ObservableArray.<HeavyParticle>} heavy particles outside the container
+      this.heavyParticlesOutside = new ObservableArray( [] );
+
+      // @public (read-only) {ObservableArray.<LightParticle>} light particles outside the container
+      this.lightParticlesOutside = new ObservableArray( [] );
+
+      // @public (read-only) performance optimization, for iterating over all particles inside the container
       this.insideParticleArrays = [ this.heavyParticles, this.lightParticles ];
 
       // @public the number of heavy particles inside the container
@@ -74,30 +82,20 @@ define( require => {
       const createHeavyParticle = ( options ) => new HeavyParticle( options );
       this.numberOfHeavyParticlesProperty.link( ( newValue, oldValue ) => {
         this.updateNumberOfParticles( newValue, oldValue, this.heavyParticles, createHeavyParticle );
-        assert && assert( GasPropertiesUtils.isArrayOf( this.heavyParticles, HeavyParticle ),
+        assert && assert( GasPropertiesUtils.isObservableArrayOf( this.heavyParticles, HeavyParticle ),
           'heavyParticles should contain only HeavyParticle' );
       } );
       const createLightParticle = ( options ) => new LightParticle( options );
       this.numberOfLightParticlesProperty.link( ( newValue, oldValue ) => {
         this.updateNumberOfParticles( newValue, oldValue, this.lightParticles, createLightParticle );
-        assert && assert( GasPropertiesUtils.isArrayOf( this.lightParticles, LightParticle ),
+        assert && assert( GasPropertiesUtils.isObservableArrayOf( this.lightParticles, LightParticle ),
           'lightParticles should contain only LightParticle' );
       } );
 
       // @public N, the total number of particles in the container.
       this.numberOfParticlesProperty = new DerivedProperty(
-        [ this.numberOfHeavyParticlesProperty, this.numberOfLightParticlesProperty ],
-        ( numberOfHeavyParticles, numberOfLightParticles ) =>  {
-
-          // Verify that particle arrays have been populated before numberOfParticlesProperty is updated.
-          // If you hit these assertions, then you need to add this listener later.  This is a trade-off
-          // for using plain old Arrays instead of ObservableArray.
-          assert && assert( this.heavyParticles.length === numberOfHeavyParticles,
-            'heavyParticles has not been populated yet' );
-          assert && assert( this.lightParticles.length === numberOfLightParticles,
-            'lightParticles not been populated yet' );
-          return numberOfHeavyParticles + numberOfLightParticles;
-        }, {
+        [ this.heavyParticles.lengthProperty, this.lightParticles.lengthProperty ],
+        ( heavyParticlesLength, lightParticlesLength ) => heavyParticlesLength + lightParticlesLength, {
           numberType: 'Integer',
           valueType: 'number',
           isValidValue: value => value >= 0
@@ -113,13 +111,13 @@ define( require => {
 
       // Remove and dispose of particles
       this.numberOfHeavyParticlesProperty.reset();
-      assert && assert( this.heavyParticles.length === 0, 'there should be no heavyParticles' );
+      assert && assert( this.heavyParticles.lengthProperty.value === 0, 'there should be no heavyParticles' );
       this.numberOfLightParticlesProperty.reset();
-      assert && assert( this.lightParticles.length === 0, 'there should be no lightParticles' );
+      assert && assert( this.lightParticles.lengthProperty.value === 0, 'there should be no lightParticles' );
       ParticleUtils.removeAllParticles( this.heavyParticlesOutside );
-      assert && assert( this.heavyParticlesOutside.length === 0, 'there should be no heavyParticlesOutside' );
+      assert && assert( this.heavyParticlesOutside.lengthProperty.value === 0, 'there should be no heavyParticlesOutside' );
       ParticleUtils.removeAllParticles( this.lightParticlesOutside );
-      assert && assert( this.lightParticlesOutside.length === 0, 'there should be no lightParticlesOutside' );
+      assert && assert( this.lightParticlesOutside.lengthProperty.value === 0, 'there should be no lightParticlesOutside' );
     }
 
     /**
@@ -163,44 +161,44 @@ define( require => {
 
         ParticleUtils.escapeParticles( container, this.numberOfHeavyParticlesProperty,
           this.heavyParticles, this.heavyParticlesOutside, );
-        assert && assert( GasPropertiesUtils.isArrayOf( this.heavyParticlesOutside, HeavyParticle ),
+        assert && assert( GasPropertiesUtils.isObservableArrayOf( this.heavyParticlesOutside, HeavyParticle ),
           'heavyParticlesOutside should contain only HeavyParticle' );
 
         ParticleUtils.escapeParticles( container, this.numberOfLightParticlesProperty,
           this.lightParticles, this.lightParticlesOutside );
-        assert && assert( GasPropertiesUtils.isArrayOf( this.lightParticlesOutside, LightParticle ),
+        assert && assert( GasPropertiesUtils.isObservableArrayOf( this.lightParticlesOutside, LightParticle ),
           'lightParticlesOutside should contain only LightParticle' );
       }
     }
 
     /**
-     * Removes particles that are outside the specified bounds. This is used to dispose of particles once they
-     * are outside the visible bounds of the sim.
+     * Removes particles that have floated above the specified bounds.
+     * This is used to dispose of particles once they have float out of the container and off the top of the window.
      * @param {Bounds2} bounds
      * @public
      */
-    removeParticlesOutOfBounds( bounds ) {
+    removeParticlesAboveBounds( bounds ) {
       assert && assert( bounds instanceof Bounds2, `invalid bounds: ${bounds}` );
 
-      ParticleUtils.removeParticlesOutOfBounds( this.heavyParticlesOutside, bounds );
-      ParticleUtils.removeParticlesOutOfBounds( this.lightParticlesOutside, bounds );
+      ParticleUtils.removeParticlesAboveBounds( this.heavyParticlesOutside, bounds );
+      ParticleUtils.removeParticlesAboveBounds( this.lightParticlesOutside, bounds );
     }
 
     /**
      * Adjusts an array of particles to have the desired number of elements.
      * @param {number} newValue - new number of particles
      * @param {number} oldValue - old number of particles
-     * @param {Particle[]} particles - array of particles that corresponds to newValue and oldValue
+     * @param {ObservableArray} particles - array of particles that corresponds to newValue and oldValue
      * @param {function(options:*):Particle} createParticle - creates a Particle instance
      * @private
      */
     updateNumberOfParticles( newValue, oldValue, particles, createParticle ) {
       assert && assert( typeof newValue === 'number', `invalid newValue: ${newValue}` );
       assert && assert( oldValue === null || typeof oldValue === 'number', `invalid oldValue: ${oldValue}` );
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( typeof createParticle === 'function', `invalid createParticle: ${createParticle}` );
 
-      if ( particles.length !== newValue ) {
+      if ( particles.lengthProperty.value !== newValue ) {
         const delta = newValue - oldValue;
         if ( delta > 0 ) {
           this.addParticles( delta, particles, createParticle );
@@ -215,13 +213,13 @@ define( require => {
     /**
      * Adds n particles to the end of the specified array.
      * @param {number} n
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @param {function(options:*):Particle} createParticle - creates a Particle instance
      * @private
      */
     addParticles( n, particles, createParticle ) {
       assert && assert( typeof n === 'number' && n > 0, `invalid n: ${n}` );
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( typeof createParticle === 'function', `invalid createParticle: ${createParticle}` );
 
       // Get the temperature that will be used to compute initial velocity magnitude.
@@ -297,9 +295,9 @@ define( require => {
       const ratio = desiredAverageKE / actualAverageKE;
 
       for ( let i = 0; i < this.insideParticleArrays.length; i++ ) {
-        const particles = this.insideParticleArrays[ i ];
-        for ( let j = 0; j < particles.length; j++ ) {
-          const particle = particles[ j ];
+        const array = this.insideParticleArrays[ i ].getArray(); // use raw array for performance
+        for ( let j = 0; j < array.length; j++ ) {
+          const particle = array[ j ];
           const actualParticleKE = particle.getKineticEnergy();
           const desiredParticleKE = ratio * actualParticleKE;
           const desiredSpeed = Math.sqrt( 2 * desiredParticleKE / particle.mass ); // |v| = Math.sqrt( 2 * KE / m )

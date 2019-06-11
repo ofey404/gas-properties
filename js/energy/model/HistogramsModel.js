@@ -14,6 +14,7 @@ define( require => {
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
   const GasPropertiesConstants = require( 'GAS_PROPERTIES/common/GasPropertiesConstants' );
   const NumberProperty = require( 'AXON/NumberProperty' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const ParticleSystem = require( 'GAS_PROPERTIES/common/model/ParticleSystem' );
   const Property = require( 'AXON/Property' );
 
@@ -204,30 +205,32 @@ define( require => {
 
   /**
    * Gets the speed values for a set of particles, in pm/ps.
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @returns {number[]}
    */
   function getSpeedValues( particles ) {
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
     const values = [];
-    for ( let i = 0; i < particles.length; i++ ) {
-      values.push( particles[ i ].velocity.magnitude );
+    const array = particles.getArray(); // use raw array for performance
+    for ( let i = 0; i < array.length; i++ ) {
+      values.push( array[ i ].velocity.magnitude );
     }
     return values;
   }
 
   /**
    * Gets the kinetic energy values for a set of particles, in in AMU * pm^2 / ps^2.
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @returns {number[]}
    */
   function getKineticEnergyValues( particles ) {
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
     const values = [];
-    for ( let i = 0; i < particles.length; i++ ) {
-      values.push( particles[ i ].getKineticEnergy() );
+    const array = particles.getArray(); // use raw array for performance
+    for ( let i = 0; i < array.length; i++ ) {
+      values.push( array[ i ].getKineticEnergy() );
     }
     return values;
   }

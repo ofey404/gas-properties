@@ -24,15 +24,15 @@ define( require => {
 
     /**
      * @param {DiffusionContainer} container
-     * @param {DiffusionParticle1[]} particles1
-     * @param {DiffusionParticle2[]} particles2
+     * @param {ObservableArray} particles1
+     * @param {ObservableArray} particles2
      * @param {Object} [options]
      */
     constructor( container, particles1, particles2, options ) {
       assert && assert( container instanceof DiffusionContainer, `invalid container: ${container}` );
-      assert && assert( GasPropertiesUtils.isArrayOf( particles1, DiffusionParticle1 ),
+      assert && assert( GasPropertiesUtils.isObservableArrayOf( particles1, DiffusionParticle1 ),
         `invalid particles1: ${particles1}` );
-      assert && assert( GasPropertiesUtils.isArrayOf( particles2, DiffusionParticle2 ),
+      assert && assert( GasPropertiesUtils.isObservableArrayOf( particles2, DiffusionParticle2 ),
         `invalid particles2: ${particles2}` );
 
       super( container, [ particles1, particles2 ], new BooleanProperty( true ), options );

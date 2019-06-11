@@ -14,6 +14,7 @@ define( require => {
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
   const GasPropertiesConstants = require( 'GAS_PROPERTIES/common/GasPropertiesConstants' );
   const NumberProperty = require( 'AXON/NumberProperty' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const Property = require( 'AXON/Property' );
 
   // constants
@@ -30,16 +31,18 @@ define( require => {
 
     /**
      * @param {Bounds2} bounds - bounds of one side of the container
-     * @param {DiffusionParticle1[]} particles1
-     * @param {DiffusionParticle2[]} particles2
+     * @param {ObservableArray} particles1 - of DiffusionParticle1
+     * @param {ObservableArray} particles2 - of DiffusionParticle2
      */
     constructor( bounds, particles1, particles2 ) {
       assert && assert( bounds instanceof Bounds2, `invalid bounds: ${bounds}` );
-      assert && assert( Array.isArray( particles1 ), `invalid particles1: ${particles1}` );
-      assert && assert( Array.isArray( particles2 ), `invalid particles1: ${particles2}` );
+      assert && assert( particles1 instanceof ObservableArray, `invalid particles1: ${particles1}` );
+      assert && assert( particles2 instanceof ObservableArray, `invalid particles2: ${particles2}` );
 
       // @private
       this.bounds = bounds;
+      this.particles1 = particles1;
+      this.particles2 = particles2;
 
       // @public number of DiffusionParticle1 in this side of the container
       this.numberOfParticles1Property = new NumberProperty( 0, NUMBER_OF_PARTICLES_PROPERTY_OPTIONS );
@@ -51,26 +54,23 @@ define( require => {
       // null when there are no particles in this side of the container.
       this.averageTemperatureProperty = new Property( null, AVERAGE_TEMPERATURE_PROPERTY_OPTIONS );
 
-      this.update( particles1, particles2 );
+      this.update();
     }
 
     /**
      * Updates Properties based on the contents of the particle arrays.
-     * @param {DiffusionParticle1[]} particles1
-     * @param {DiffusionParticle2[]} particles2
      * @public
      */
-    update( particles1, particles2 ) {
-      assert && assert( Array.isArray( particles1 ), `invalid particles1: ${particles1}` );
-      assert && assert( Array.isArray( particles2 ), `invalid particles1: ${particles2}` );
+    update() {
 
       let numberOfParticles1 = 0;
       let numberOfParticles2 = 0;
       let totalKE = 0;
 
       // Contribution by DiffusionParticle1 species
-      for ( let i = 0; i < particles1.length; i++ ) {
-        const particle = particles1[ i ];
+      const array1 = this.particles1.getArray(); // use raw array for performance
+      for ( let i = 0; i < array1.length; i++ ) {
+        const particle = array1[ i ];
         if ( this.bounds.containsPoint( particle.location ) ) {
           numberOfParticles1++;
           totalKE += particle.getKineticEnergy();
@@ -79,8 +79,9 @@ define( require => {
 
       // Contribution by DiffusionParticle2 species.
       // Note that there's a wee bit of code duplication here, but it gains use some iteration efficiency.
-      for ( let i = 0; i < particles2.length; i++ ) {
-        const particle = particles2[ i ];
+      const array2 = this.particles2.getArray(); // use raw array for performance
+      for ( let i = 0; i < array2.length; i++ ) {
+        const particle = array2[ i ];
         if ( this.bounds.containsPoint( particle.location ) ) {
           numberOfParticles2++;
           totalKE += particle.getKineticEnergy();

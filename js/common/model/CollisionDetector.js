@@ -30,6 +30,7 @@ define( require => {
   const Bounds2 = require( 'DOT/Bounds2' );
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
   const GasPropertiesUtils = require( 'GAS_PROPERTIES/common/GasPropertiesUtils' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const Particle = require( 'GAS_PROPERTIES/common/model/Particle' );
   const Region = require( 'GAS_PROPERTIES/common/model/Region' );
   const Vector2 = require( 'DOT/Vector2' );
@@ -38,7 +39,7 @@ define( require => {
 
     /**
      * @param {BaseContainer} container - the container inside which collision occur
-     * @param {Particle[][]} particleArrays - collections of particles inside the container
+     * @param {ObservableArray[]} particleArrays - collections of particles inside the container
      * @param {BooleanProperty} particleParticleCollisionsEnabledProperty - whether particle-particle collisions occur
      * @param {Object} [options]
      */
@@ -174,7 +175,7 @@ define( require => {
 
   /**
    * Assigns each particle to the Regions that it intersects, accounting for particle radius.
-   * @param {Particle[]} particleArrays - collections of particles
+   * @param {ObservableArray[]} particleArrays - collections of particles
    * @param {Region[]} regions
    */
   function assignParticlesToRegions( particleArrays, regions ) {
@@ -182,9 +183,9 @@ define( require => {
     assert && assert( Array.isArray( regions ) && regions.length > 0, `invalid regions: ${regions}` );
 
     for ( let i = 0; i < particleArrays.length; i++ ) {
-      const particles = particleArrays[ i ];
-      for ( let j = 0; j < particles.length; j++ ) {
-        const particle = particles[ j ];
+      const array = particleArrays[ i ].getArray(); // use raw array for performance
+      for ( let j = 0; j < array.length; j++ ) {
+        const particle = array[ j ];
         for ( let k = 0; k < regions.length; k++ ) {
           const region = regions[ k ];
           if ( particle.intersectsBounds( region.bounds ) ) {
@@ -315,21 +316,22 @@ define( require => {
 
   /**
    * Detects and handles particle-container collisions.
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @param {Bounds2} containerBounds
    * @param {Vector2} leftWallVelocity - velocity of the container's left (movable) wall
    * @returns {number} number of collisions
    */
   function doParticleContainerCollisions( particles, containerBounds, leftWallVelocity ) {
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
     assert && assert( containerBounds instanceof Bounds2, `invalid containerBounds: ${containerBounds}` );
     assert && assert( leftWallVelocity instanceof Vector2, `invalid leftWallVelocity: ${leftWallVelocity}` );
 
     let numberOfCollisions = 0;
 
-    for ( let i = 0; i < particles.length; i++ ) {
+    const array = particles.getArray(); // use raw array for performance
+    for ( let i = 0; i < array.length; i++ ) {
 
-      const particle = particles[ i ];
+      const particle = array[ i ];
       let collided = false;
 
       // adjust x

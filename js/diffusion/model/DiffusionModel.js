@@ -21,6 +21,7 @@ define( require => {
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
   const GasPropertiesConstants = require( 'GAS_PROPERTIES/common/GasPropertiesConstants' );
   const GasPropertiesUtils = require( 'GAS_PROPERTIES/common/GasPropertiesUtils' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const ParticleFlowRate = require( 'GAS_PROPERTIES/diffusion/model/ParticleFlowRate' );
   const ParticleUtils = require( 'GAS_PROPERTIES/common/model/ParticleUtils' );
   const Property = require( 'AXON/Property' );
@@ -51,8 +52,17 @@ define( require => {
       } );
 
       // @public (read-only) particles of each species, together these make up the 'particle system'
-      this.particles1 = []; // {DiffusionParticle1[]}
-      this.particles2 = []; // {DiffusionParticle2[]}
+      this.particles1 = new ObservableArray( [] ); // {ObservableArray.<DiffusionParticle1>}
+      this.particles2 = new ObservableArray( [] ); // {ObservableArray.<DiffusionParticle2>}
+
+      // @public {Property.<number>} N, the total number of particles in the container
+      this.numberOfParticlesProperty = new DerivedProperty(
+        [ this.particles1.lengthProperty, this.particles2.lengthProperty ],
+        ( particles1Length, particles2Length ) => particles1Length + particles2Length, {
+          numberType: 'Integer',
+          valueType: 'number',
+          isValidValue: value => value >= 0
+        } );
 
       // @public
       this.container = new DiffusionContainer();
@@ -69,7 +79,7 @@ define( require => {
           this.leftSettings,
           this.particles1,
           createDiffusionParticle1 );
-        assert && assert( GasPropertiesUtils.isArrayOf( this.particles1, DiffusionParticle1 ),
+        assert && assert( GasPropertiesUtils.isObservableArrayOf( this.particles1, DiffusionParticle1 ),
           'particles1 should contain only DiffusionParticle1' );
       } );
       const createDiffusionParticle2 = ( options ) => new DiffusionParticle2( options );
@@ -79,26 +89,9 @@ define( require => {
           this.rightSettings,
           this.particles2,
           createDiffusionParticle2 );
-        assert && assert( GasPropertiesUtils.isArrayOf( this.particles2, DiffusionParticle2 ),
+        assert && assert( GasPropertiesUtils.isObservableArrayOf( this.particles2, DiffusionParticle2 ),
           'particles2 should contain only DiffusionParticle2' );
       } );
-
-      // @public {Property.<number>} N, the total number of particles in the container
-      this.numberOfParticlesProperty = new DerivedProperty(
-        [ this.leftSettings.numberOfParticlesProperty, this.rightSettings.numberOfParticlesProperty ],
-        ( leftNumberOfParticles, rightNumberOfParticles ) => {
-
-          // Verify that particle arrays have been populated before numberOfParticlesProperty is updated.
-          // If you hit these assertions, then you need to add this listener later.  This is a trade-off
-          // for using plain old Arrays instead of ObservableArray.
-          assert && assert( this.particles1.length === leftNumberOfParticles, 'particles1 has not been populated yet' );
-          assert && assert( this.particles2.length === rightNumberOfParticles, 'particles2 has not been populated yet' );
-          return leftNumberOfParticles + rightNumberOfParticles;
-        }, {
-          numberType: 'Integer',
-          valueType: 'number',
-          isValidValue: value => value >= 0
-        } );
 
       // @public data for the left and right sides of the container, appears in Data accordion box
       this.leftData = new DiffusionData( this.container.leftBounds, this.particles1, this.particles2 );
@@ -177,8 +170,8 @@ define( require => {
       this.particleFlowRate1.reset();
       this.particleFlowRate2.reset();
 
-      assert && assert( this.particles1.length === 0, 'there should be no DiffusionParticle1 particles' );
-      assert && assert( this.particles2.length === 0, 'there should be no DiffusionParticle2 particles' );
+      assert && assert( this.particles1.lengthProperty.value === 0, 'there should be no DiffusionParticle1 particles' );
+      assert && assert( this.particles2.lengthProperty.value === 0, 'there should be no DiffusionParticle2 particles' );
     }
 
     /**
@@ -215,7 +208,7 @@ define( require => {
      * @param {number} numberOfParticles - desired number of particles
      * @param {Bounds2} locationBounds - initial location will be inside this bounds
      * @param {DiffusionSettings} settings
-     * @param {Particle[]} particles - array of particles that corresponds to newValue and oldValue
+     * @param {ObservableArray} particles - array of particles that corresponds to newValue and oldValue
      * @param {function(options:*):Particle} createParticle - creates a Particle instance
      * @private
      */
@@ -223,7 +216,7 @@ define( require => {
       assert && assert( typeof numberOfParticles === 'number', `invalid numberOfParticles: ${numberOfParticles}` );
       assert && assert( locationBounds instanceof Bounds2, `invalid locationBounds: ${locationBounds}` );
       assert && assert( settings instanceof DiffusionSettings, `invalid settings: ${settings}` );
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( typeof createParticle === 'function', `invalid createParticle: ${createParticle}` );
 
       const delta = numberOfParticles - particles.length;
@@ -257,8 +250,8 @@ define( require => {
      * @private
      */
     updateData() {
-      this.leftData.update( this.particles1, this.particles2 );
-      this.rightData.update( this.particles1, this.particles2 );
+      this.leftData.update();
+      this.rightData.update();
     }
   }
 
@@ -267,14 +260,14 @@ define( require => {
    * @param {number} n
    * @param {Bounds2} locationBounds - initial location will be inside this bounds
    * @param {DiffusionSettings} settings
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @param {function(options:*):Particle} createParticle - creates a Particle instance
    */
   function addParticles( n, locationBounds, settings, particles, createParticle ) {
     assert && assert( typeof n === 'number' && n > 0, `invalid n: ${n}` );
     assert && assert( locationBounds instanceof Bounds2, `invalid location: ${location}` );
     assert && assert( settings instanceof DiffusionSettings, `invalid settings: ${settings}` );
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
     assert && assert( typeof createParticle === 'function', `invalid createParticle: ${createParticle}` );
 
     // Create n particles
@@ -308,37 +301,39 @@ define( require => {
    * When mass or initial temperature changes, update particles and adjust their speed accordingly.
    * @param {number} mass
    * @param {number} temperature
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    */
   function updateMassAndTemperature( mass, temperature, particles ) {
     assert && assert( typeof mass === 'number' && mass > 0, `invalid mass: ${mass}` );
     assert && assert( typeof temperature === 'number' && temperature >= 0, `invalid temperature: ${temperature}` );
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
-    for ( let i = 0; i < particles.length; i++ ) {
-      particles[ i ].mass = mass;
+    const array = particles.getArray(); // use raw array for performance
+    for ( let i = 0; i < array.length; i++ ) {
+      array[ i ].mass = mass;
 
       // |v| = sqrt( 3kT / m )
-      particles[ i ].setVelocityMagnitude( Math.sqrt( 3 * GasPropertiesConstants.BOLTZMANN * temperature / mass ) );
+      array[ i ].setVelocityMagnitude( Math.sqrt( 3 * GasPropertiesConstants.BOLTZMANN * temperature / mass ) );
     }
   }
 
   /**
    * Updates the radius for a set of particles.
    * @param {number} radius
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @param {Bounds2} bounds - particles should be inside these bounds
    * @param {boolean} isPlaying
    */
   function updateRadius( radius, particles, bounds, isPlaying ) {
     assert && assert( typeof radius === 'number' && radius > 0, `invalid radius: ${radius}` );
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
     assert && assert( bounds instanceof Bounds2, `invalid bounds: ${bounds}` );
     assert && assert( typeof isPlaying === 'boolean', `invalid isPlaying: ${isPlaying}` );
 
-    for ( let i = 0; i < particles.length; i++ ) {
+    const array = particles.getArray(); // use raw array for performance
+    for ( let i = 0; i < array.length; i++ ) {
 
-      const particle = particles[ i ];
+      const particle = array[ i ];
       particle.radius = radius;
 
       // If the sim is paused, then adjust the location of any particles are not fully inside the bounds.

@@ -14,116 +14,122 @@ define( require => {
   const GasPropertiesContainer = require( 'GAS_PROPERTIES/common/model/GasPropertiesContainer' );
   const GasPropertiesQueryParameters = require( 'GAS_PROPERTIES/common/GasPropertiesQueryParameters' );
   const NumberProperty = require( 'AXON/NumberProperty' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const Particle = require( 'GAS_PROPERTIES/common/model/Particle' );
 
   const ParticleUtils = {
 
     /**
      * Steps a collection of particles.
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @param {number} dt - time step in ps
      * @public
      */
     stepParticles( particles, dt ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( typeof dt === 'number' && dt > 0, `invalid dt: ${dt}` );
 
-      for ( let i = 0; i < particles.length; i++ ) {
-        particles[ i ].step( dt );
+      const array = particles.getArray(); // use raw array for performance
+      for ( let i = 0; i < array.length; i++ ) {
+        array[ i ].step( dt );
       }
     },
 
     /**
      * Removes a particle from an array and disposes it.
      * @param {Particle} particle
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @public
      */
     removeParticle: function( particle, particles ) {
       assert && assert( particle instanceof Particle, `invalid particle: ${particle}` );
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
-      const index = particles.indexOf( particle );
-      assert && assert( index !== -1, 'particle not found' );
+      assert && assert( particles.indexOf( particle ) !== -1, 'particle not found' );
 
-      particles.splice( index, 1 );
+      particles.remove( particle );
       particle.dispose();
     },
 
     /**
      * Removes the last n particles from an array and disposes them.
      * @param {number} n
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @public
      */
     removeParticles: function( n, particles ) {
       assert && assert( n <= particles.length,
         `attempted to remove ${n} particles, but we only have ${particles.length} particles` );
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
-      const particlesToRemove = particles.slice( particles.length - n, particles.length );
-      for ( let i = 0; i < particlesToRemove.length; i++ ) {
-        ParticleUtils.removeParticle( particlesToRemove[ i ], particles );
+      for ( let i = 0; i < n; i++ ) {
+        const lastParticle = particles.get( particles.lengthProperty.value - 1 );
+        ParticleUtils.removeParticle( lastParticle, particles );
       }
     },
 
     /**
      * Removes and disposes an entire collection of particles.
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @public
      */
     removeAllParticles: function( particles ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
-      ParticleUtils.removeParticles( particles.length, particles );
+      ParticleUtils.removeParticles( particles.lengthProperty.value, particles );
     },
 
     /**
-     * Removes particles that are out of bounds and disposes them.
-     * @param {Particle[]} particles
+     * Removes particles that are above the specified bounds and disposes them.
+     * @param {ObservableArray} particles
      * @param {Bounds2} bounds
      * @public
      */
-    removeParticlesOutOfBounds: function( particles, bounds ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    removeParticlesAboveBounds: function( particles, bounds ) {
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( bounds instanceof Bounds2, `invalid bounds: ${bounds}` );
 
-      for ( let i = 0; i < particles.length; i++ ) {
-        if ( !particles[ i ].intersectsBounds( bounds ) ) {
-          ParticleUtils.removeParticle( particles[ i ], particles );
+      const array = particles.getArray(); // use raw array for performance
+      for ( let i = array.length - 1; i >= 0; i-- ) {
+        const particle = array[ i ];
+        if ( particle.bottom > bounds.maxY ) {
+          ParticleUtils.removeParticle( particle, particles );
         }
       }
     },
 
     /**
      * Redistributes particles in the horizontal dimension.
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @param {number} scaleX - amount to scale the location's x component
      * @public
      */
     redistributeParticles: function( particles, scaleX ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( typeof scaleX === 'number' && scaleX > 0, `invalid scaleX: ${scaleX}` );
 
-      for ( let i = 0; i < particles.length; i++ ) {
-        particles[ i ].location.setX( scaleX * particles[ i ].location.x );
+      const array = particles.getArray(); // use raw array for performance
+      for ( let i = 0; i < array.length; i++ ) {
+        const particle = array[ i ];
+        particle.location.setX( scaleX * particle.location.x );
       }
     },
 
     /**
      * Heats or cools a collection of particles.
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @param {number} heatCoolFactor - (-1,1), heat=[0,1), cool=(-1,0]
      * @public
      */
     heatCoolParticles: function( particles, heatCoolFactor ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
       assert && assert( typeof heatCoolFactor === 'number' && heatCoolFactor >= -1 && heatCoolFactor <= 1,
         `invalid heatCoolFactor: ${heatCoolFactor}` );
 
       const velocityScale = 1 + heatCoolFactor / GasPropertiesQueryParameters.heatCool;
-      for ( let i = 0; i < particles.length; i++ ) {
-        particles[ i ].scaleVelocity( velocityScale );
+      const array = particles.getArray(); // use raw array for performance/
+      for ( let i = 0; i < array.length; i++ ) {
+        array[ i ].scaleVelocity( velocityScale );
       }
     },
 
@@ -132,24 +138,25 @@ define( require => {
      * moves them from insideParticles to outsideParticles.
      * @param {GasPropertiesContainer} container
      * @param {NumberProperty} numberOfParticlesProperty - number of particles inside the container
-     * @param {Particle[]} insideParticles - particles inside the container
-     * @param {Particle[]} outsideParticles - particles outside the container
+     * @param {ObservableArray} insideParticles - particles inside the container
+     * @param {ObservableArray} outsideParticles - particles outside the container
      * @public
      */
     escapeParticles: function( container, numberOfParticlesProperty, insideParticles, outsideParticles ) {
       assert && assert( container instanceof GasPropertiesContainer, `invalid container: ${container}` );
       assert && assert( numberOfParticlesProperty instanceof NumberProperty,
         `invalid numberOfParticlesProperty: ${numberOfParticlesProperty}` );
-      assert && assert( Array.isArray( insideParticles ), `invalid insideParticles: ${insideParticles}` );
-      assert && assert( Array.isArray( outsideParticles ), `invalid outsideParticles: ${outsideParticles}` );
+      assert && assert( insideParticles instanceof ObservableArray, `invalid insideParticles: ${insideParticles}` );
+      assert && assert( outsideParticles instanceof ObservableArray, `invalid outsideParticles: ${outsideParticles}` );
 
-      for ( let i = 0; i < insideParticles.length; i++ ) {
-        const particle = insideParticles[ i ];
+      const array = insideParticles.getArray(); // use raw array for performance
+      for ( let i = array.length - 1; i >= 0; i-- ) {
+        const particle = array[ i ];
         assert && assert( particle instanceof Particle, `invalid particle: ${particle}` );
         if ( particle.top > container.top &&
              particle.left > container.getOpeningLeft() &&
              particle.right < container.openingRight ) {
-          insideParticles.splice( insideParticles.indexOf( particle ), 1 );
+          insideParticles.remove( particle );
           numberOfParticlesProperty.value--;
           outsideParticles.push( particle );
         }
@@ -158,34 +165,36 @@ define( require => {
 
     /**
      * Gets the total kinetic energy of a collection of particles.
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @returns {number} in AMU * pm^2 / ps^2
      * @public
      */
     getTotalKineticEnergy: function( particles ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
       let totalKineticEnergy = 0;
-      for ( let i = 0; i < particles.length; i++ ) {
-        totalKineticEnergy += particles[ i ].getKineticEnergy();
+      const array = particles.getArray(); // use raw array for performance
+      for ( let i = 0; i < array.length; i++ ) {
+        totalKineticEnergy += array[ i ].getKineticEnergy();
       }
       return totalKineticEnergy;
     },
 
     /**
      * Gets the centerX of mass for a collection of particles.
-     * @param {Particle[]} particles
+     * @param {ObservableArray} particles
      * @returns {number|null} null if there are no particles and therefore no center of mass
      * @public
      */
     getCenterXOfMass: function( particles ) {
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
-      if ( particles.length > 0 ) {
+      const array = particles.getArray(); // use raw array for performance
+      if ( array.length > 0 ) {
         let numerator = 0;
         let totalMass = 0;
-        for ( let i = 0; i < particles.length; i++ ) {
-          const particle = particles[ i ];
+        for ( let i = 0; i < array.length; i++ ) {
+          const particle = array[ i ];
           numerator += ( particle.mass * particle.location.x );
           totalMass += particle.mass;
         }

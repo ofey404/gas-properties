@@ -82,7 +82,18 @@ define( require => {
      * @returns {boolean}
      */
     isArrayOf( array, Constructor ) {
-      return Array.isArray( array ) && _.every( array, value => value instanceof Constructor );
+      assert && assert( Array.isArray( array ), `invalid array: ${array}` );
+      return _.every( array, value => value instanceof Constructor );
+    },
+
+    /**
+     * Determines whether an ObservableArray is homogeneous.
+     * @param {ObservableArray} observableArray
+     * @param {constructor} Constructor
+     * @returns {boolean}
+     */
+    isObservableArrayOf( observableArray, Constructor ) {
+      return GasPropertiesUtils.isArrayOf( observableArray.getArray(), Constructor );
     }
   };
 

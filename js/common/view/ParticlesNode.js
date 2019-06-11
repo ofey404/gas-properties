@@ -15,6 +15,7 @@ define( require => {
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
   const GasPropertiesQueryParameters = require( 'GAS_PROPERTIES/common/GasPropertiesQueryParameters' );
   const ModelViewTransform2 = require( 'PHETCOMMON/view/ModelViewTransform2' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
   const Particle = require( 'GAS_PROPERTIES/common/model/Particle' );
   const ParticleNode = require( 'GAS_PROPERTIES/common/view/ParticleNode' );
   const Property = require( 'AXON/Property' );
@@ -26,7 +27,7 @@ define( require => {
   class ParticlesNode extends CanvasNode {
 
     /**
-     * @param {Particle[][]} particleArrays - arrays of particles to render
+     * @param {ObservableArray[]} particleArrays - observable arrays of particles to render
      * @param {Property.<HTMLCanvasElement>[]} imageProperties - an image for each array in particleArrays
      * @param {ModelViewTransform2} modelViewTransform
      * @param {ColorDef} debugFill - fill the canvas when ?canvasBounds, for debugging
@@ -115,23 +116,24 @@ define( require => {
    * Draws a collection of particles.
    * @param {CanvasRenderingContext2D} context
    * @param {ModelViewTransform2} modelViewTransform
-   * @param {Particle[]} particles
+   * @param {ObservableArray} particles
    * @param {HTMLCanvasElement} image
    */
   function drawParticles( context, modelViewTransform, particles, image ) {
     assert && assert( context instanceof CanvasRenderingContext2D, `invalid context: ${context}` );
     assert && assert( modelViewTransform instanceof ModelViewTransform2,
       `invalid modelViewTransform: ${modelViewTransform}` );
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+    assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
     assert && assert( image instanceof HTMLCanvasElement, `invalid image: ${image}` );
 
-    for ( let i = 0; i < particles.length; i++ ) {
+    const array = particles.getArray(); // use raw array for performance
+    for ( let i = 0; i < array.length; i++ ) {
       context.drawImage( image,
 
         // Be careful about how dx, dy args are computed. Content is centered and padded in HTMLCanvasElement
         // because we provided integer bounds in particleToCanvas.
-        modelViewTransform.modelToViewX( particles[ i ].location.x ) - ( image.width / 2 ) / IMAGE_SCALE,
-        modelViewTransform.modelToViewY( particles[ i ].location.y ) - ( image.height / 2 ) / IMAGE_SCALE,
+        modelViewTransform.modelToViewX( array[ i ].location.x ) - ( image.width / 2 ) / IMAGE_SCALE,
+        modelViewTransform.modelToViewY( array[ i ].location.y ) - ( image.height / 2 ) / IMAGE_SCALE,
         image.width / IMAGE_SCALE,
         image.height / IMAGE_SCALE
       );

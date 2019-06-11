@@ -143,16 +143,16 @@ define( require => {
 
     /**
      * Determines whether the container fully contains one or more collections of particles.
-     * @param {Particle[][]} particleArrays
+     * @param {ObservableArray[]} particleArrays
      * @returns {boolean}
      */
     containsParticles( particleArrays ) {
       assert && assert( Array.isArray( particleArrays ), `invalid particlesArray: ${particleArrays}` );
 
       for ( let i = 0; i < particleArrays.length; i++ ) {
-        const particles = particleArrays[ i ];
-        for ( let j = 0; j < particles.length; j++ ) {
-          const particle = particles[ j ];
+        const array = particleArrays[ i ].getArray(); // use raw array for performance
+        for ( let j = 0; j < array.length; j++ ) {
+          const particle = array[ j ];
           if ( !this.containsParticle( particle ) ) {
             return false;
           }

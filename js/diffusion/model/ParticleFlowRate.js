@@ -13,6 +13,7 @@ define( require => {
   // modules
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
   const NumberProperty = require( 'AXON/NumberProperty' );
+  const ObservableArray = require( 'AXON/ObservableArray' );
 
   // constants
   const FLOW_RATE_PROPERTY_OPTIONS = {
@@ -27,11 +28,11 @@ define( require => {
 
     /**
      * @param {number} dividerX - x location of the container's divider
-     * @param {Particle[]} particles - particles to be monitored
+     * @param {ObservableArray} particles - particles to be monitored
      */
     constructor( dividerX, particles ) {
       assert && assert( typeof dividerX === 'number', `invalid dividerX: ${dividerX}` );
-      assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
+      assert && assert( particles instanceof ObservableArray, `invalid particles: ${particles}` );
 
       // @private 
       this.dividerX = dividerX;
@@ -70,8 +71,9 @@ define( require => {
       // Take a sample.
       let leftCount = 0; // <--
       let rightCount = 0; // -->
-      for ( let i = 0; i < this.particles.length; i++ ) {
-        const particle = this.particles[ i ];
+      const array = this.particles.getArray(); // use raw array for performance
+      for ( let i = 0; i < array.length; i++ ) {
+        const particle = array[ i ];
         if ( particle.previousLocation.x >= this.dividerX && particle.location.x < this.dividerX ) {
           leftCount++;
         }

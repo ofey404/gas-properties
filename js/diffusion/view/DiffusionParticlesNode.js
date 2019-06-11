@@ -42,7 +42,7 @@ define( require => {
         model.rightSettings.radiusProperty
       );
 
-      // {Particle[][]} arrays for each particle species
+      // {ObservableArray[]} observable arrays for each particle species
       const particleArrays = [ model.particles1, model.particles2 ];
 
       // {Property.<HTMLCanvasElement>[]} images for each particle species in particleArrays
