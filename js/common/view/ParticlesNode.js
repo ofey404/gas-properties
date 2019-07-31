@@ -10,20 +10,23 @@ define( require => {
   'use strict';
 
   // modules
-  const CanvasNode = require( 'SCENERY/nodes/CanvasNode' );
   const ColorDef = require( 'SCENERY/util/ColorDef' );
   const gasProperties = require( 'GAS_PROPERTIES/gasProperties' );
-  const GasPropertiesQueryParameters = require( 'GAS_PROPERTIES/common/GasPropertiesQueryParameters' );
   const ModelViewTransform2 = require( 'PHETCOMMON/view/ModelViewTransform2' );
   const Particle = require( 'GAS_PROPERTIES/common/model/Particle' );
   const ParticleNode = require( 'GAS_PROPERTIES/common/view/ParticleNode' );
   const Property = require( 'AXON/Property' );
+  const Sprite = require( 'SCENERY/util/Sprite' );
+  const SpriteImage = require( 'SCENERY/util/SpriteImage' );
+  const SpriteInstance = require( 'SCENERY/util/SpriteInstance' );
+  const Sprites = require( 'SCENERY/nodes/Sprites' );
+  const Vector2 = require( 'DOT/Vector2' );
 
   // constants
   const IMAGE_SCALE = 2; // scale images to improve quality, see https://github.com/phetsims/gas-properties/issues/55
   const IMAGE_PADDING = 2;
 
-  class ParticlesNode extends CanvasNode {
+  class ParticlesNode extends Sprites {
 
     /**
      * @param {Particle[][]} particleArrays - arrays of particles to render
@@ -41,16 +44,37 @@ define( require => {
         `invalid modelViewTransform: ${modelViewTransform}` );
       assert && assert( ColorDef.isColorDef( debugFill ), `invalid debugFill: ${debugFill}` );
 
-      super();
+      const sprites = imageProperties.map( imageProperty => {
+        const imageToSpriteImage = image => {
+          return new SpriteImage( image, new Vector2( image.width / 2, image.height / 2 ) );
+        };
+        const sprite = new Sprite( imageToSpriteImage( imageProperty.value ) );
+        imageProperty.lazyLink( image => {
+          sprite.imageProperty.value = imageToSpriteImage( image );
+        } );
+        return sprite;
+      } );
 
-      // If any image changes while the sim is paused, redraw the particle system.
-      Property.multilink( imageProperties, () => { this.update(); } );
+      const spriteInstances = [];
+
+      super( {
+        sprites: sprites,
+        spriteInstances: spriteInstances,
+        renderer: 'webgl'
+      } );
+
+      // @private
+      this.sprites = sprites;
+      this.spriteInstances = spriteInstances;
 
       // @private
       this.modelViewTransform = modelViewTransform;
       this.particleArrays = particleArrays;
       this.imageProperties = imageProperties;
       this.debugFill = debugFill;
+
+      // If any image changes while the sim is paused, redraw the particle system.
+      Property.multilink( imageProperties, () => { this.update(); } );
     }
 
     /**
@@ -58,29 +82,35 @@ define( require => {
      * @public
      */
     update() {
-      this.invalidatePaint(); // results in a call to paintCanvas
-    }
+      let index = 0;
 
-    /**
-     * Redraws the particles to reflect their current state.
-     * @param {CanvasRenderingContext2D} context
-     * @public
-     * @override
-     */
-    paintCanvas( context ) {
-      assert && assert( context instanceof CanvasRenderingContext2D, `invalid context: ${context}` );
-
-      // Stroke the canvas bounds, for debugging.  This is a big performance hit.
-      if ( GasPropertiesQueryParameters.canvasBounds ) {
-        const canvasBounds = this.getCanvasBounds();
-        context.fillStyle = this.debugFill;
-        context.fillRect( canvasBounds.x, canvasBounds.y, canvasBounds.width, canvasBounds.height );
-      }
-
-      // Draw the particles
       for ( let i = this.particleArrays.length - 1; i >= 0; i-- ) {
-        drawParticles( context, this.modelViewTransform, this.particleArrays[ i ], this.imageProperties[ i ].value );
+        const particleArray = this.particleArrays[ i ];
+        const sprite = this.sprites[ i ];
+
+        for ( let j = particleArray.length - 1; j >= 0; j-- ) {
+          const particle = particleArray[ j ];
+
+          if ( this.spriteInstances.length === index ) {
+            const newInstance = SpriteInstance.dirtyFromPool();
+            newInstance.isTranslation = false;
+            newInstance.alpha = 1;
+            newInstance.matrix.setToAffine( 1 / IMAGE_SCALE, 0, 0, 0, 1 / IMAGE_SCALE, 0 );
+            this.spriteInstances.push( newInstance );
+          }
+
+          const spriteInstance = this.spriteInstances[ index++ ];
+          spriteInstance.sprite = sprite;
+          spriteInstance.matrix.set02( this.modelViewTransform.modelToViewX( particle.location.x ) );
+          spriteInstance.matrix.set12( this.modelViewTransform.modelToViewY( particle.location.y ) );
+        }
       }
+
+      while ( this.spriteInstances.length > index ) {
+        this.spriteInstances.pop().freeToPool();
+      }
+
+      this.invalidatePaint(); // results in a call to paintCanvas
     }
 
     /**
@@ -108,38 +138,6 @@ define( require => {
       // Convert the particle Node to an HTMLCanvasElement
       particleNode.toCanvas( canvas => { particleImageProperty.value = canvas; },
         canvasWidth / 2, canvasHeight / 2, canvasWidth, canvasHeight );
-    }
-  }
-
-  /**
-   * Draws a collection of particles.
-   * @param {CanvasRenderingContext2D} context
-   * @param {ModelViewTransform2} modelViewTransform
-   * @param {Particle[]} particles
-   * @param {HTMLCanvasElement} image
-   */
-  function drawParticles( context, modelViewTransform, particles, image ) {
-    assert && assert( context instanceof CanvasRenderingContext2D, `invalid context: ${context}` );
-    assert && assert( modelViewTransform instanceof ModelViewTransform2,
-      `invalid modelViewTransform: ${modelViewTransform}` );
-    assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
-    assert && assert( image instanceof HTMLCanvasElement, `invalid image: ${image}` );
-
-    const xOffset = ( image.width / 2 ) / IMAGE_SCALE;
-    const yOffset = ( image.height / 2 ) / IMAGE_SCALE;
-    const dWidth = image.width / IMAGE_SCALE;
-    const dHeight = image.height / IMAGE_SCALE;
-
-    for ( let i = particles.length - 1; i >= 0; i-- ) {
-      context.drawImage( image,
-
-        // Be careful about how dx, dy args are computed. Content is centered and padded in HTMLCanvasElement
-        // because we provided integer bounds in particleToCanvas.
-        modelViewTransform.modelToViewX( particles[ i ].location.x ) - xOffset,  // dx
-        modelViewTransform.modelToViewY( particles[ i ].location.y ) - yOffset,  // dy
-        dWidth,
-        dHeight
-      );
     }
   }
 

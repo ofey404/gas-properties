@@ -23,6 +23,8 @@ define( require => {
   const gasPropertiesTitleString = require( 'string!GAS_PROPERTIES/gas-properties.title' );
 
   const simOptions = {
+    // Enabled for high-performance sprites
+    webgl: true,
 
     // Creates content for the Options dialog, accessible via the PhET menu
     createOptionsDialogContent: tandem => new GasPropertiesGlobalOptionsNode( {
