@@ -57,8 +57,8 @@
     "branch": "master"
   },
   "scenery": {
-    "sha": "f0fc69852576f9cb8d330269aec8ccbe18e7bf3e",
-    "branch": "sprites"
+    "sha": "08b15e1ea65a8ed3cf7ff26a768b4676479ecb6d",
+    "branch": "master"
   },
   "scenery-phet": {
     "sha": "93b8d4bd8d45b0bf761b1eaec5519c458390e178",
