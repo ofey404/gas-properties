@@ -4,6 +4,7 @@
  * GasPropertiesIconFactory is a set of factory methods for creating the various icons that appear in the sim.
  *
  * @author Chris Malley (PixelZoom, Inc.)
+ * @author Ofey Chan (Fudan University)
  */
 
 import NumberProperty from '../../../../axon/js/NumberProperty.js';
@@ -252,6 +253,82 @@ const GasPropertiesIconFactory = {
 
     const iconNode = new Node( {
       children: [ containerNode, dividerNode, particlesParent ]
+    } );
+
+    return new ScreenIcon( iconNode, {
+      maxIconWidthProportion: 1,
+      maxIconHeightProportion: 1,
+      fill: GasPropertiesColorProfile.screenBackgroundColorProperty
+    } );
+  },
+  /**
+   * Creates the icon for the LeakageScreen
+   * @returns {Node}
+   * @public
+   */
+  createLeakageScreenIcon() {
+    // Invisible container, so that divider is centered
+    const containerNode = new Rectangle( 0, 0, 425, 300, {
+      stroke: phet.chipper.queryParameters.dev ? 'red' : null
+    } );
+
+    // A divider with a hole
+    const upperDividerNode = new Line( 0, 0, 0, containerNode.height*2/5, {
+      stroke: GasPropertiesColorProfile.dividerColorProperty,
+      lineWidth: 12,
+      top: containerNode.top,
+      left: containerNode.left + containerNode.width/2
+    } );
+    const lowerDividerNode = new Line( 0, containerNode.height*3/5, 0, containerNode.height, {
+      stroke: GasPropertiesColorProfile.dividerColorProperty,
+      lineWidth: 12,
+      bottom: containerNode.bottom,
+      left: containerNode.left + containerNode.width/2
+    } );
+    // Particles, positions determined empirically, relative to centerX of divider, specified left to right
+    const particle1Positions = [
+      new Vector2( -400, 300 ), new Vector2( -300, 600 ), new Vector2( -600, 800 )
+    ];
+    const particle2Positions = [
+      new Vector2( 300, 400 )
+    ];
+
+    const arrowOptions = {
+      fill: GasPropertiesColorProfile.particle1ColorProperty,
+      stroke: 'black',
+      headHeight: 40,
+      headWidth: 40,
+      tailWidth: 20
+    };
+
+    const arrowY = containerNode.height*2/3;
+    const arrowTailX = containerNode.width*3/5;
+    const arrowTipX = containerNode.width;
+
+    const arrowNode = new ArrowNode(arrowTailX, arrowY, arrowTipX, arrowY, arrowOptions);
+
+    // Create particle icons, relative to centerTop of divider
+    const particleNodes = [];
+    for ( let i = 0; i < particle1Positions.length; i++ ) {
+      particleNodes.push( GasPropertiesIconFactory.createDiffusionParticle1Icon( SCREEN_ICONS_TRANSFORM, {
+        center: particle1Positions[ i ]
+      } ) );
+    }
+    for ( let i = 0; i < particle2Positions.length; i++ ) {
+      particleNodes.push( GasPropertiesIconFactory.createDiffusionParticle2Icon( SCREEN_ICONS_TRANSFORM, {
+        center: particle2Positions[ i ]
+      } ) );
+    }
+
+    // Parent for particles, scale empirically
+    const particlesParent = new Node( {
+      scale: 0.25,
+      translation: containerNode.centerTop,
+      children: particleNodes
+    } );
+
+    const iconNode = new Node( {
+      children: [ containerNode, upperDividerNode, lowerDividerNode, arrowNode, particlesParent ]
     } );
 
     return new ScreenIcon( iconNode, {

@@ -23,7 +23,7 @@ class LeakageScreen extends GasPropertiesScreen {
 
     super( createModel, createView, tandem, {
       name: gasPropertiesStrings.screen.leakage,
-      homeScreenIcon: GasPropertiesIconFactory.createExploreScreenIcon()
+      homeScreenIcon: GasPropertiesIconFactory.createLeakageScreenIcon()
     } );
   }
 }
