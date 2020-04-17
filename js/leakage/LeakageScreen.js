@@ -6,6 +6,7 @@ import GasPropertiesIconFactory from '../common/view/GasPropertiesIconFactory';
 import Tandem from '../../../tandem/js/Tandem';
 import LeakageModel from './model/LeakageModel';
 import LeakageScreenView from './view/LeakageScreenView';
+import gasPropertiesStrings from '../gasPropertiesStrings.js';
 
 /**
  * @author Ofey Chan (Fudan University)
@@ -21,7 +22,7 @@ class LeakageScreen extends GasPropertiesScreen {
     const createView = model => new LeakageScreenView( model, tandem.createTandem( 'view' ) );
 
     super( createModel, createView, tandem, {
-      name: 'test',
+      name: gasPropertiesStrings.screen.leakage,
       homeScreenIcon: GasPropertiesIconFactory.createExploreScreenIcon()
     } );
   }
