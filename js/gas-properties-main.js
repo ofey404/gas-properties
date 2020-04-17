@@ -16,6 +16,7 @@ import EnergyScreen from './energy/EnergyScreen.js';
 import ExploreScreen from './explore/ExploreScreen.js';
 import gasPropertiesStrings from './gasPropertiesStrings.js';
 import IdealScreen from './ideal/IdealScreen.js';
+import LeakageScreen from './leakage/LeakageScreen.js';
 
 const gasPropertiesTitleString = gasPropertiesStrings[ 'gas-properties' ].title;
 
@@ -35,7 +36,8 @@ SimLauncher.launch( () => {
     new IdealScreen( Tandem.ROOT.createTandem( 'idealScreen' ) ),
     new ExploreScreen( Tandem.ROOT.createTandem( 'exploreScreen' ) ),
     new EnergyScreen( Tandem.ROOT.createTandem( 'energyScreen' ) ),
-    new DiffusionScreen( Tandem.ROOT.createTandem( 'diffusionScreen' ) )
+    new DiffusionScreen( Tandem.ROOT.createTandem( 'diffusionScreen' ) ),
+    new LeakageScreen( Tandem.ROOT.createTandem( 'leakageScreen' ) )
   ];
   const sim = new Sim( gasPropertiesTitleString, screens, simOptions );
   sim.start();
