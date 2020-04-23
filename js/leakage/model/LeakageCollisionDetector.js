@@ -4,27 +4,20 @@
  * @author Ofey Chan (Fudan University)
  */
 
-import CollisionDetector from "../../common/model/CollisionDetector";
+import CollisionDetector from '../../common/model/CollisionDetector';
+import gasProperties from '../../gasProperties';
+import BooleanProperty from '../../../../axon/js/BooleanProperty';
 
 class LeakageCollisionDetector extends CollisionDetector {
-  // TODO
   
   /**
-   * @param {DiffusionContainer} container
-   * @param {DiffusionParticle1[]} particles1
-   * @param {DiffusionParticle2[]} particles2
+   * @param {LeakageContainer} container
+   * @param {LeakageParticle[]} particles
    * @param {Object} [options]
    */
-  constructor( container, particles1, particles2, options ) {
-  }
-
-  /**
-   * Detects and handles particle-container collisions for the system for one time step.
-   * @returns {number} the number of collisions
-   * @protected
-   * @override
-   */
-  updateParticleContainerCollisions() {
+  constructor( container, particles, options ) {
+    // TODO Make own detector
+    super( container, [particles], new BooleanProperty( true ), options);
   }
 }
 

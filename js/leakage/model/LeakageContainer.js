@@ -1,9 +1,11 @@
 // Copyright 2019-2020, University of Colorado Boulder
 
-import BaseContainer from "../../common/model/BaseContainer";
-import RangeWithValue from "../../../../dot/js/RangeWithValue";
-import merge from "../../../../phet-core/js/merge";
-import Bounds2 from "../../../../dot/js/Bounds2";
+import BaseContainer from '../../common/model/BaseContainer';
+import RangeWithValue from '../../../../dot/js/RangeWithValue';
+import merge from '../../../../phet-core/js/merge';
+import Tandem from '../../../../tandem/js/Tandem.js';
+import gasProperties from '../../gasProperties';
+
 
 /**
  * @author Ofey Chan (Fudan University)
@@ -13,7 +15,6 @@ import Bounds2 from "../../../../dot/js/Bounds2";
 const CONTAINER_WIDTH = 16000; // pm
 
  class LeakageContainer extends BaseContainer {
-  // TODO
   
   /**
    * @param {Object} [options]
@@ -29,23 +30,13 @@ const CONTAINER_WIDTH = 16000; // pm
     super( {
       widthRange: new RangeWithValue( CONTAINER_WIDTH, CONTAINER_WIDTH, CONTAINER_WIDTH ) // effectively fixed width
     } );
+
     // In case clients attempt to use this feature of the base class
     this.widthProperty.lazyLink( width => {
       throw new Error( 'container width is fixed in the Diffusion screen' );
     } );
 
-    // @public (read-only) divider thickness, in pm
-    this.dividerThickness = 100;
-
-    // @public (read-only) divider is horizontally centered, but no code assumes that
-    this.dividerX = this.left + ( this.width / 2 );
-    assert && assert(
-    ( this.dividerX + this.dividerThickness / 2 > this.left ) &&
-    ( this.dividerX - this.dividerThickness / 2 < this.right ),
-      `dividerX is not in the container: ${this.dividerX}` );
-
-    // Build a barrier.
-    // TODO
+    // TODO Build a divider
   }
   /**
     * Resets the container.

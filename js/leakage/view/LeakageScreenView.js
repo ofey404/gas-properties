@@ -4,63 +4,59 @@
  * @author Ofey Chan (Fudan University)
  */
 
-import Node from '../../../../scenery/js/nodes/Node.js';
 import Tandem from '../../../../tandem/js/Tandem.js';
-import GasPropertiesConstants from '../../common/GasPropertiesConstants.js';
-import IdealGasLawScreenView from '../../common/view/IdealGasLawScreenView.js';
-import ParticlesAccordionBox from '../../common/view/ParticlesAccordionBox.js';
 import gasProperties from '../../gasProperties.js';
 import LeakageModel from '../model/LeakageModel';
-import ExploreToolsPanel from '../../explore/view/ExploreToolsPanel';
-import ExploreViewProperties from '../../explore/view/ExploreViewProperties.js';
+import BaseScreenView from '../../common/view/BaseScreenView.js';
+import LeakageViewProperties from './LeakageViewProperties';
+import LeakageContainerNode from './LeakageContainerNode';
+import LeakageParticleSystemNode from './LeakageParticleSystemNode';
+import merge from '../../../../phet-core/js/merge.js';
+import GasPropertiesConstants from '../../common/GasPropertiesConstants.js';
 
-class LeakageScreenView extends IdealGasLawScreenView {
+class LeakageScreenView extends BaseScreenView {
 
   /**
    * @param {LeakageModel} model
    * @param {Tandem} tandem
    */
-  constructor( model, tandem ) {
+  constructor( model, tandem, options ) {
     assert && assert( model instanceof LeakageModel, `invalid model: ${model}` );
     assert && assert( tandem instanceof Tandem, `invalid tandem: ${tandem}` );
 
-    // view-specific Properties
-    const viewProperties = new ExploreViewProperties( tandem.createTandem( 'viewProperties' ) );
+    options = merge( {
 
-    super( model, viewProperties.particleTypeProperty, viewProperties.widthVisibleProperty, tandem );
+      // superclass options
+      hasSlowMotion: true // adds Normal/Slow radio buttons to the time controls
+    }, options );
 
-    // Panel at upper right
-    const toolsPanel = new ExploreToolsPanel(
-      viewProperties.widthVisibleProperty,
-      model.stopwatch.isVisibleProperty,
-      model.collisionCounter.visibleProperty, {
-        fixedWidth: GasPropertiesConstants.RIGHT_PANEL_WIDTH,
-        right: this.layoutBounds.right - GasPropertiesConstants.SCREEN_VIEW_X_MARGIN,
-        top: this.layoutBounds.top + GasPropertiesConstants.SCREEN_VIEW_Y_MARGIN,
-        tandem: tandem.createTandem( 'toolsPanel' )
-      } );
+    super( model, tandem, options );
 
-    // Particles accordion box
-    const particlesAccordionBox = new ParticlesAccordionBox(
-      model.particleSystem.numberOfHeavyParticlesProperty,
-      model.particleSystem.numberOfLightParticlesProperty,
-      model.modelViewTransform, {
-        fixedWidth: GasPropertiesConstants.RIGHT_PANEL_WIDTH,
-        expandedProperty: viewProperties.particlesExpandedProperty,
-        right: toolsPanel.right,
-        top: toolsPanel.bottom + 15,
-        tandem: tandem.createTandem( 'particlesAccordionBox' )
-      } );
+    const viewProperties = new LeakageViewProperties( tandem.createTandem( 'viewProperties' ) );
 
-    // Rendering order. Everything we add should be behind what is created by super.
-    const parent = new Node();
-    parent.addChild( toolsPanel );
-    parent.addChild( particlesAccordionBox );
-    this.addChild( parent );
-    parent.moveToBack();
+    const containerNode = new LeakageContainerNode( model.container, model.modelViewTransform, {} );
 
-    // @private used in methods
+    const particleSystemNode = new LeakageParticleSystemNode( model );
+
+    model.numberOfParticlesProperty.link( () => {
+      if ( !this.model.isPlayingProperty.value ) {
+        particleSystemNode.update();
+      }
+    } );
+
+    this.addChild( containerNode );
+    this.addChild( particleSystemNode );
+
+    // Position the time controls
+    this.timeControlNode.mutate( {
+      left: this.layoutBounds.left,
+      bottom: this.layoutBounds.bottom - GasPropertiesConstants.SCREEN_VIEW_Y_MARGIN
+    } );
+    
+    // @private
+    this.model = model;
     this.viewProperties = viewProperties;
+    this.particleSystemNode = particleSystemNode;
   }
 
   /**
@@ -71,6 +67,18 @@ class LeakageScreenView extends IdealGasLawScreenView {
   reset() {
     super.reset();
     this.viewProperties.reset();
+  }
+
+  /**
+   * Steps the view using real time units.
+   * @param {number} dt - time delta, in seconds
+   * @public
+   * @override
+   */
+  stepView( dt ) {
+    assert && assert( typeof dt === 'number' && dt >= 0, `invalid dt: ${dt}` );
+    super.stepView( dt );
+    this.particleSystemNode.update();
   }
 }
 
