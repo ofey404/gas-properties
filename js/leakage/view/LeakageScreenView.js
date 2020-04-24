@@ -13,6 +13,7 @@ import LeakageContainerNode from './LeakageContainerNode';
 import LeakageParticleSystemNode from './LeakageParticleSystemNode';
 import merge from '../../../../phet-core/js/merge.js';
 import GasPropertiesConstants from '../../common/GasPropertiesConstants.js';
+import LeakageControlPanel from './LeakageControlPanel.js';
 
 class LeakageScreenView extends BaseScreenView {
 
@@ -38,6 +39,15 @@ class LeakageScreenView extends BaseScreenView {
 
     const particleSystemNode = new LeakageParticleSystemNode( model );
 
+    const controlPanel = new LeakageControlPanel( model.settings,
+       model.modelViewTransform,
+       model.numberOfParticlesProperty, {
+        fixedWidth: 300,
+        right: this.layoutBounds.right - GasPropertiesConstants.SCREEN_VIEW_X_MARGIN,
+        top: this.layoutBounds.top + GasPropertiesConstants.SCREEN_VIEW_Y_MARGIN,
+        tandem: tandem.createTandem( 'controlPanel' )
+       } );
+
     model.numberOfParticlesProperty.link( () => {
       if ( !this.model.isPlayingProperty.value ) {
         particleSystemNode.update();
@@ -46,6 +56,7 @@ class LeakageScreenView extends BaseScreenView {
 
     this.addChild( containerNode );
     this.addChild( particleSystemNode );
+    this.addChild( controlPanel );
 
     // Position the time controls
     this.timeControlNode.mutate( {

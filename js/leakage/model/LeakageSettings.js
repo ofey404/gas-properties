@@ -26,7 +26,7 @@ class LeakageSettings {
 
     // @public
     this.numberOfParticlesProperty =
-    new NumberProperty( GasPropertiesConstants.NUMBER_OF_PARTICLES_RANGE.defaultValue + 10, {  // TODO Temporary add 10 particle for debug.
+    new NumberProperty( GasPropertiesConstants.NUMBER_OF_PARTICLES_RANGE.defaultValue, {
       numberType: 'Integer',
       range: GasPropertiesConstants.NUMBER_OF_PARTICLES_RANGE,
       isValidValue: value => ( value % LeakageSettings.DELTAS.numberOfParticles === 0 ),
