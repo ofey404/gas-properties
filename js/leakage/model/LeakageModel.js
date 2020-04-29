@@ -55,7 +55,8 @@ class LeakageModel extends BaseModel {
         this.container.bounds,
         this.settings,
         this.particles,
-        createLeakageParticle );
+        createLeakageParticle,
+        this.container.obstacleArray );
     } );
 
     this.numberOfParticlesProperty = new DerivedProperty(
@@ -81,7 +82,7 @@ class LeakageModel extends BaseModel {
    * @param {function(options:*):Particle} createParticle - creates a Particle instance
    * @private
    */
-  updateNumberOfParticles( numberOfParticles, positionBounds, settings, particles, createParticle ) {
+  updateNumberOfParticles( numberOfParticles, positionBounds, settings, particles, createParticle, obstacleArray ) {
     assert && assert( typeof numberOfParticles === 'number', `invalid numberOfParticles: ${numberOfParticles}` );
     assert && assert( positionBounds instanceof Bounds2, `invalid positionBounds: ${positionBounds}` );
     assert && assert( settings instanceof LeakageSettings, `invalid settings: ${settings}` );
@@ -91,7 +92,7 @@ class LeakageModel extends BaseModel {
     const delta = numberOfParticles - particles.length;
     if ( delta !== 0 ) {
       if ( delta > 0 ) {
-        addParticles( delta, positionBounds, settings, particles, createParticle );
+        addParticles( delta, positionBounds, settings, particles, createParticle, obstacleArray );
       }
       else {
         ParticleUtils.removeLastParticles( -delta, particles );
@@ -130,12 +131,11 @@ class LeakageModel extends BaseModel {
     // Step particles
     ParticleUtils.stepParticles( this.particles, dt );
 
-    this.collisionDetector.update();
+    this.collisionDetector.update( dt );
   }
 }
 
 
-// TODO: Make one of my own
 /**
  * Adds n particles to the end of the specified array.
  * @param {number} n
@@ -143,8 +143,9 @@ class LeakageModel extends BaseModel {
  * @param {LeakageSettings} settings
  * @param {Particle[]} particles
  * @param {function(options:*):Particle} createParticle - creates a Particle instance
+ * @param {Bounds2[]} obstacleArray
  */
-function addParticles( n, positionBounds, settings, particles, createParticle ) {
+function addParticles( n, positionBounds, settings, particles, createParticle, obstacleArray ) {
   assert && assert( typeof n === 'number' && n > 0, `invalid n: ${n}` );
   assert && assert( positionBounds instanceof Bounds2, `invalid positionBounds: ${positionBounds}` );
   assert && assert( settings instanceof LeakageSettings, `invalid settings: ${settings}` );
@@ -159,9 +160,25 @@ function addParticles( n, positionBounds, settings, particles, createParticle ) 
       radius: settings.radiusProperty.value
     } );
 
-    // Position the particle at a random position within positionBounds, accounting for particle radius.
-    const x = phet.joist.random.nextDoubleBetween( positionBounds.minX + particle.radius, positionBounds.maxX - particle.radius );
-    const y = phet.joist.random.nextDoubleBetween( positionBounds.minY + particle.radius, positionBounds.maxY - particle.radius );
+    // Original position.
+    let x = 0;
+    let y = 0;
+    
+    let inObstacles = true;
+    while ( inObstacles ) {
+      // Position the particle at a random position within positionBounds, accounting for particle radius.
+      x = phet.joist.random.nextDoubleBetween( positionBounds.minX + particle.radius, positionBounds.maxX - particle.radius );
+      y = phet.joist.random.nextDoubleBetween( positionBounds.minY + particle.radius, positionBounds.maxY - particle.radius );
+      
+      inObstacles = false;
+      for ( let i = obstacleArray.length - 1; i >= 0; i-- ) {
+        if ( obstacleArray[ i ].containsCoordinates( x, y ) ) {
+          inObstacles = true;
+          break;
+        }
+      }
+    }
+
     particle.setPositionXY( x, y );
     assert && assert( positionBounds.containsPoint( particle.position ), 'particle is outside of positionBounds' );
 

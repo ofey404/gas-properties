@@ -221,7 +221,7 @@ class Particle {
    * @public
    */
   toString() {
-    return `Particle[position:(${this.position.x},${this.position.y}) mass:${this.mass} radius:${this.radius}]`;
+    return `Particle[position:(${this.position.x},${this.position.y}), velocity:(${this.velocity.x},${this.velocity.y}) mass:${this.mass} radius:${this.radius}]`;
   }
 }
 

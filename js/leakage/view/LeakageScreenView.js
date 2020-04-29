@@ -14,6 +14,7 @@ import LeakageParticleSystemNode from './LeakageParticleSystemNode';
 import merge from '../../../../phet-core/js/merge.js';
 import GasPropertiesConstants from '../../common/GasPropertiesConstants.js';
 import LeakageControlPanel from './LeakageControlPanel.js';
+import ObstacleNode from './ObstacleNode.js';
 
 class LeakageScreenView extends BaseScreenView {
 
@@ -39,6 +40,8 @@ class LeakageScreenView extends BaseScreenView {
 
     const particleSystemNode = new LeakageParticleSystemNode( model );
 
+    const obstacleNode = new ObstacleNode( model.container, model.modelViewTransform, {} );
+
     const controlPanel = new LeakageControlPanel( model.settings,
        model.modelViewTransform,
        model.numberOfParticlesProperty, {
@@ -56,6 +59,7 @@ class LeakageScreenView extends BaseScreenView {
 
     this.addChild( containerNode );
     this.addChild( particleSystemNode );
+    this.addChild( obstacleNode );
     this.addChild( controlPanel );
 
     // Position the time controls

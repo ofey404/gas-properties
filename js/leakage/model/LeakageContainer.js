@@ -1,17 +1,17 @@
 // Copyright 2019-2020, University of Colorado Boulder
 
+/**
+ * @author Ofey Chan (Fudan University)
+ */
+
 import BaseContainer from '../../common/model/BaseContainer';
 import RangeWithValue from '../../../../dot/js/RangeWithValue';
 import merge from '../../../../phet-core/js/merge';
 import Tandem from '../../../../tandem/js/Tandem.js';
 import gasProperties from '../../gasProperties';
+import Bounds2 from '../../../../dot/js/Bounds2';
 
-
-/**
- * @author Ofey Chan (Fudan University)
- */
-
- // constants
+// constants
 const CONTAINER_WIDTH = 16000; // pm
 
  class LeakageContainer extends BaseContainer {
@@ -36,7 +36,14 @@ const CONTAINER_WIDTH = 16000; // pm
       throw new Error( 'container width is fixed in the Diffusion screen' );
     } );
 
-    // TODO Build a divider
+    // Place a obstacle.
+    this.obstacleArray = [
+      new Bounds2(
+        this.position.x - this.width * 3 / 4, this.position.y + this.height / 4,
+        this.position.x - this.width / 4, this.position.y + this.height * 3 / 4
+      )
+    ];
+
   }
   /**
     * Resets the container.
