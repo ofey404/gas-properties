@@ -74,7 +74,7 @@ class LeakageModel extends BaseModel {
   }
 
   /**
-   * Adjusts an array of particles to have the desired number of elements.
+   * Adjusts an array of particles, to have desired number of particle in given bounds.
    * @param {number} numberOfParticles - desired number of particles
    * @param {Bounds2} positionBounds - initial position will be inside this bounds
    * @param {LeakageSettings} settings
@@ -89,13 +89,13 @@ class LeakageModel extends BaseModel {
     assert && assert( Array.isArray( particles ), `invalid particles: ${particles}` );
     assert && assert( typeof createParticle === 'function', `invalid createParticle: ${createParticle}` );
 
-    const delta = numberOfParticles - particles.length;
+    const delta = numberOfParticles - particleNumberInBounds( particles, positionBounds );
     if ( delta !== 0 ) {
       if ( delta > 0 ) {
         addParticles( delta, positionBounds, settings, particles, createParticle, obstacleArray );
       }
       else {
-        ParticleUtils.removeLastParticles( -delta, particles );
+        removeParticlesInBounds( -delta, particles, positionBounds );
       }
 
       // If paused, update things that would normally be handled by step.
@@ -192,6 +192,54 @@ function addParticles( n, positionBounds, settings, particles, createParticle, o
     );
 
     particles.push( particle );
+  }
+}
+
+
+/**
+ * Calculate particle number in given bounds.
+ * 
+ * @param {Particle} particles 
+ * @param {Bounds2} bounds 
+ */
+function particleNumberInBounds( particles, bounds ) {
+  let counter = 0;
+  for ( let i = particles.length - 1; i >= 0; i-- ) {
+    const particle = particles[ i ];
+    if ( bounds.containsPoint( particle.position ) ) {
+      counter++;
+    }
+  }
+  return counter;
+}
+
+/**
+ * Remove delta number of particles in given bounds.
+ * 
+ * @param {number} delta - should be non-negative.
+ * @param {Particle} particles 
+ * @param {Bounds2} bounds 
+ */
+function removeParticlesInBounds( delta, particles, bounds ) {
+  for ( let toBeRemovedCount = delta; toBeRemovedCount >= 0; toBeRemovedCount-- ) {
+    removeOneParticleInBound( particles, bounds );
+  }
+}
+
+
+/**
+ * Remove a particle in given bounds.
+ * 
+ * @param {Partice[]} particles 
+ * @param {Bounds2} bounds 
+ */
+function removeOneParticleInBound( particles, bounds ) {
+  for ( let i = particles.length - 1; i >= 0; i-- ) {
+    const particle = particles[ i ];
+    if ( bounds.containsPoint( particle.position ) ) {
+      particles.splice( i, 1 );
+      break;
+    }
   }
 }
 
