@@ -131,7 +131,7 @@ class LeakageModel extends BaseModel {
     // Step particles
     ParticleUtils.stepParticles( this.particles, dt );
 
-    this.collisionDetector.update( dt );
+    this.collisionDetector.update();
   }
 }
 
