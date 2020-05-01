@@ -95,6 +95,12 @@
   "numberOfParticles": {
     "value": "Number of Particles"
   },
+  "vacuumCellNumberOfParticles": {
+    "value": "Vacuum Cell Particle Number"
+  },
+  "outsideCellNumberOfParticles": {
+    "value": "Outside Cell Particle Number"
+  },
   "kineticEnergy": {
     "value": "Kinetic Energy"
   },

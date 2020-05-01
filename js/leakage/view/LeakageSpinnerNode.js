@@ -8,7 +8,6 @@
 import VBox from '../../../../scenery/js/nodes/VBox';
 import gasProperties from '../../gasProperties';
 import LeakageSettings from '../model/LeakageSettings';
-import gasPropertiesStrings from '../../gasPropertiesStrings';
 import ModelViewTransform2 from '../../../../phetcommon/js/view/ModelViewTransform2';
 import merge from '../../../../phet-core/js/merge';
 import Tandem from '../../../../tandem/js/Tandem';
@@ -16,43 +15,44 @@ import GasPropertiesSpinner from '../../diffusion/view/GasPropertiesSpinner';
 import Text from '../../../../scenery/js/nodes/Text';
 import GasPropertiesConstants from '../../common/GasPropertiesConstants';
 import GasPropertiesColorProfile from '../../common/GasPropertiesColorProfile';
+import NumberProperty from '../../../../axon/js/NumberProperty';
 
-const numberOfParticlesString = gasPropertiesStrings.numberOfParticles;
-
-class LeakageSettingsNode extends VBox {
+class LeakageSpinnerNode extends VBox {
 
   /**
-   * @param {LeakageSettings} settings
+   * @param {NumberProperty} numberProperty
    * @param {ModelViewTransform2} modelViewTransform
+   * @param {String} label
    * @param {Object} [options]
    */
-  constructor( settings, modelViewTransform, options ) {
-    assert && assert( settings instanceof LeakageSettings, `invalid settings: ${settings}` );
+  constructor( numberProperty, modelViewTransform, label, options ) {
+    assert && assert( numberProperty instanceof NumberProperty, `invalid numberProperty: ${numberProperty}` );
     assert && assert( modelViewTransform instanceof ModelViewTransform2, `invalid modelViewTransform: ${modelViewTransform}` );
-
+    
     options = merge( {
 
-      // superclass options
-      spacing: 20,
-      align: 'left',
+    // superclass options
+    spacing: 20,
+    align: 'left',
 
-      // phet-io
-      tandem: Tandem.REQUIRED
+    // phet-io
+    tandem: Tandem.REQUIRED
     }, options );
 
-    const numberOfParticlesControl = new LeakageSettingControl( numberOfParticlesString, modelViewTransform,
-      settings.vacuumCellNumberProperty, {
-        spinnerOptions: {
-          deltaValue: LeakageSettings.DELTAS.numberOfParticles,
-          decimalPlaces: 0
-        },
-        tandem: options.tandem.createTandem( 'numberOfParticlesControl' )
-      } );
+    assert && assert( !options.children, 'LeakageSpinnerNode sets children' );
 
-    assert && assert( !options.children, 'DiffusionSettingsNode sets children' );
+    // A combinating Node of a title and a spinner.
+    const numberPropertyControl = new SpinnerWithLabel( numberProperty, label, modelViewTransform, {
+      spinnerOptions: {
+        deltaValue: LeakageSettings.DELTAS.numberOfParticles,
+        decimalPlaces: 0
+      },
+      tandem: options.tandem.createTandem( 'NumberPropertyControl' )
+    } );
+
     options = merge( {
       children: [
-        numberOfParticlesControl
+        numberPropertyControl
       ]
     }, options );
 
@@ -60,17 +60,14 @@ class LeakageSettingsNode extends VBox {
   }
 }
 
-gasProperties.register( 'LeakageSettingsNode', LeakageSettingsNode );
-
-class LeakageSettingControl extends VBox {
+class SpinnerWithLabel extends VBox {
   /**
-   * @param {string} label
-   * @param {ModelViewTransform2} modelViewTransform
-   * @param {NumberProperty} property - quantity for the right side of the container
-   * @param {Object} [options]
+   * 
+   * @param {NumberProperty} numberProperty 
+   * @param {String} label 
+   * @param {ModelViewTransform2} modelViewTransform 
    */
-  constructor( label, modelViewTransform, property, options ) {
-
+  constructor( numberProperty, label, modelViewTransform, options ) {
     options = merge( {
       spinnerOptions: null, // {*} see NumberSpinner
 
@@ -81,8 +78,7 @@ class LeakageSettingControl extends VBox {
       // phet-io
       tandem: Tandem.REQUIRED
     }, options );
-
-    // label
+    
     const labelNode = new Text( label, {
       font: GasPropertiesConstants.CONTROL_FONT,
       fill: GasPropertiesColorProfile.textFillProperty,
@@ -90,20 +86,21 @@ class LeakageSettingControl extends VBox {
       tandem: options.tandem.createTandem( 'labelNode' )
     } );
 
-    const spinner = new GasPropertiesSpinner( property, merge( {
+    const spinner = new GasPropertiesSpinner( numberProperty, merge( {
       tandem: options.tandem.createTandem( 'spinner' )
     }, options.spinnerOptions ) );
 
     // label and controls
-    assert && assert( !options.children, 'DataNode sets children' );
+    assert && assert( !options.children, 'FatherNode sets children' );
 
     options = merge( {
-      children: [labelNode, spinner]
+      children: [ labelNode, spinner ]
     }, options );
 
     super( options );
   }
+
 }
 
-
-export default LeakageSettingsNode;
+gasProperties.register( 'LeakageSpinnerNode', LeakageSpinnerNode );
+export default LeakageSpinnerNode;

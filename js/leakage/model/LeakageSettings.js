@@ -25,12 +25,22 @@ class LeakageSettings {
     }, options );
 
     // @public
-    this.numberOfParticlesProperty =
-    new NumberProperty( GasPropertiesConstants.NUMBER_OF_PARTICLES_RANGE.defaultValue, {
+    // Fixed particle number of left vacuum pump cell.
+    this.vacuumCellNumberProperty = new NumberProperty( GasPropertiesConstants.LEAKAGE.VACUUM_CELL_PARTICLE_RANGE.defaultValue, {
       numberType: 'Integer',
-      range: GasPropertiesConstants.NUMBER_OF_PARTICLES_RANGE,
+      range: GasPropertiesConstants.LEAKAGE.VACUUM_CELL_PARTICLE_RANGE,
       isValidValue: value => ( value % LeakageSettings.DELTAS.numberOfParticles === 0 ),
-      tandem: options.tandem.createTandem( 'numberOfParticlesProperty' ),
+      tandem: options.tandem.createTandem( 'vacuumCellNumberProperty' ),
+      phetioStudioControl: false // because value must be a multiple of delta
+    } );
+
+    // @public
+    // Particle density of right 'outside' cell.
+    this.outsideCellNumberProperty = new NumberProperty( GasPropertiesConstants.LEAKAGE.OUTSIDE_CELL_PARTICLE_RANGE.defaultValue, {
+      numberType: 'Integer',
+      range: GasPropertiesConstants.LEAKAGE.OUTSIDE_CELL_PARTICLE_RANGE,
+      isValidValue: value => ( value % LeakageSettings.DELTAS.numberOfParticles === 0 ),
+      tandem: options.tandem.createTandem( 'outsideCellNumberProperty' ),
       phetioStudioControl: false // because value must be a multiple of delta
     } );
 
@@ -72,7 +82,8 @@ class LeakageSettings {
    * @public
    */
   reset() {
-    this.numberOfParticlesProperty.reset();
+    this.vacuumCellNumberProperty.reset();
+    this.outsideCellNumberProperty.reset();
     this.massProperty.reset();
     this.radiusProperty.reset();
     this.initialTemperatureProperty.reset();
@@ -84,6 +95,7 @@ class LeakageSettings {
    * @public
    */
   restart() {
+    // TODO What is this functions for?
     const numberOfParticles = this.numberOfParticlesProperty.value;
     this.numberOfParticlesProperty.value = 0;
     this.numberOfParticlesProperty.value = numberOfParticles;

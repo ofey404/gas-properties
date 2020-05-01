@@ -10,14 +10,17 @@ import gasProperties from '../../gasProperties';
 import FixedWidthNode from '../../common/view/FixedWidthNode';
 import VBox from '../../../../scenery/js/nodes/VBox';
 import HSeparator from '../../../../sun/js/HSeparator';
-import LeakageSettingsNode from './LeakageSettingsNode';
 import LeakageSettings from '../model/LeakageSettings';
 import Property from '../../../../axon/js/Property';
 import merge from '../../../../phet-core/js/merge';
 import Tandem from '../../../../tandem/js/Tandem';
 import GasPropertiesConstants from '../../common/GasPropertiesConstants';
 import GasPropertiesColorProfile from '../../common/GasPropertiesColorProfile';
+import LeakageSpinnerNode from './LeakageSpinnerNode';
+import gasPropertiesStrings from '../../gasPropertiesStrings';
 
+const vacuumCellNumberOfParticleString = gasPropertiesStrings.vacuumCellNumberOfParticles;
+const outsideCellNumberOfParticleString = gasPropertiesStrings.outsideCellNumberOfParticles;
 
 class LeakageControlPanel extends Panel {
   /**
@@ -48,14 +51,25 @@ class LeakageControlPanel extends Panel {
       spacing: 18,
       children: [  // All elements in the control panel
 
-        // spinner
-        new LeakageSettingsNode(settings, modelViewTransform),
+        // Spinner of vaccum cell number of particles.
+        new LeakageSpinnerNode(
+          settings.vacuumCellNumberProperty,
+          modelViewTransform,
+          vacuumCellNumberOfParticleString
+        ),
 
         // ------------
         new HSeparator( contentWidth, {
           stroke: GasPropertiesColorProfile.separatorColorProperty,
           maxWidth: contentWidth
-        } )
+        } ),
+
+        // Spinner of outside cell number of particles.
+        new LeakageSpinnerNode(
+          settings.outsideCellNumberProperty,
+          modelViewTransform,
+          outsideCellNumberOfParticleString
+        )
       ]
     } ) );
 

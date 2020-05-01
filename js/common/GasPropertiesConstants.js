@@ -124,7 +124,13 @@ const GasPropertiesConstants = {
 
   // multiplier for converting pressure from AMU/(pm * ps^2) to kPa
   // see https://github.com/phetsims/gas-properties/blob/master/doc/images/pressure-conversion.png
-  PRESSURE_CONVERSION_SCALE: 1.66E6
+  PRESSURE_CONVERSION_SCALE: 1.66E6,
+
+  // TODO Values of leakage
+  LEAKAGE: {
+    VACUUM_CELL_PARTICLE_RANGE: new RangeWithValue( 0, 100, 0 ),
+    OUTSIDE_CELL_PARTICLE_RANGE: new RangeWithValue( 0, 100, 0 )
+  }
 };
 
 gasProperties.register( 'GasPropertiesConstants', GasPropertiesConstants );

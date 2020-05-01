@@ -51,16 +51,33 @@ class LeakageModel extends BaseModel {
 
     this.createLeakageParticle = options => new LeakageParticle( options );
 
-    this.leftHalfBound = new Bounds2(
+    // Two bounds in which number of particles are kept as constant.
+    this.vaccumCellBounds = new Bounds2(
       this.container.bounds.minX,
       this.container.bounds.minY,
-      this.container.bounds.maxX - this.container.bounds.width / 2,
+      this.container.bounds.maxX - this.container.bounds.width * 2 / 3,
       this.container.bounds.maxY
     );
 
-    this.settings.numberOfParticlesProperty.link( numberOfParticles => {
+    this.outsideCellBounds = new Bounds2(
+      this.container.bounds.minX + this.container.bounds.width * 2 / 3,
+      this.container.bounds.minY,
+      this.container.bounds.maxX,
+      this.container.bounds.maxY
+    );
+
+    this.settings.vacuumCellNumberProperty.link( numberOfParticles => {
       this.updateNumberOfParticles( numberOfParticles,
-        this.leftHalfBound,
+        this.vaccumCellBounds,
+        this.settings,
+        this.particles,
+        this.createLeakageParticle,
+        this.container.obstacleArray );
+    } );
+
+    this.settings.outsideCellNumberProperty.link( numberOfParticles => {
+      this.updateNumberOfParticles( numberOfParticles,
+        this.outsideCellBounds,
         this.settings,
         this.particles,
         this.createLeakageParticle,
@@ -68,7 +85,7 @@ class LeakageModel extends BaseModel {
     } );
 
     this.numberOfParticlesProperty = new DerivedProperty(
-      [ this.settings.numberOfParticlesProperty ],
+      [ this.settings.vacuumCellNumberProperty ],
       numberOfParticles => {
         return numberOfParticles;
       }, {
@@ -115,6 +132,25 @@ class LeakageModel extends BaseModel {
   }
 
   /**
+   * Update particle number in all bounds.
+   */
+  updateNumberOfParticlesInAllBounds() {
+    this.updateNumberOfParticles( this.settings.vacuumCellNumberProperty.value,
+      this.vaccumCellBounds,
+      this.settings,
+      this.particles,
+      this.createLeakageParticle,
+      this.container.obstacleArray );
+
+    this.updateNumberOfParticles( this.settings.outsideCellNumberProperty.value,
+      this.outsideCellBounds,
+      this.settings,
+      this.particles,
+      this.createLeakageParticle,
+      this.container.obstacleArray );
+  }
+
+  /**
    * Resets the model.
    * @public
    * @override
@@ -142,12 +178,7 @@ class LeakageModel extends BaseModel {
 
     this.collisionDetector.update();
 
-    this.updateNumberOfParticles( this.settings.numberOfParticlesProperty.value,
-      this.leftHalfBound,
-      this.settings,
-      this.particles,
-      this.createLeakageParticle,
-      this.container.obstacleArray );
+    this.updateNumberOfParticlesInAllBounds();
   }
 }
 
