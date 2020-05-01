@@ -49,13 +49,21 @@ class LeakageModel extends BaseModel {
       tandem: tandem.createTandem( 'settings' )
     } );
 
-    const createLeakageParticle = options => new LeakageParticle( options );
+    this.createLeakageParticle = options => new LeakageParticle( options );
+
+    this.leftHalfBound = new Bounds2(
+      this.container.bounds.minX,
+      this.container.bounds.minY,
+      this.container.bounds.maxX - this.container.bounds.width / 2,
+      this.container.bounds.maxY
+    );
+
     this.settings.numberOfParticlesProperty.link( numberOfParticles => {
       this.updateNumberOfParticles( numberOfParticles,
-        this.container.bounds,
+        this.leftHalfBound,
         this.settings,
         this.particles,
-        createLeakageParticle,
+        this.createLeakageParticle,
         this.container.obstacleArray );
     } );
 
@@ -115,6 +123,7 @@ class LeakageModel extends BaseModel {
     super.reset();
     this.container.reset();
     this.settings.reset();
+    this.particles.splice( 0, this.particles.length );
   }
 
   /**
@@ -132,6 +141,13 @@ class LeakageModel extends BaseModel {
     ParticleUtils.stepParticles( this.particles, dt );
 
     this.collisionDetector.update();
+
+    this.updateNumberOfParticles( this.settings.numberOfParticlesProperty.value,
+      this.leftHalfBound,
+      this.settings,
+      this.particles,
+      this.createLeakageParticle,
+      this.container.obstacleArray );
   }
 }
 
