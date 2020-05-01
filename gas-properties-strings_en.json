@@ -101,6 +101,9 @@
   "outsideCellNumberOfParticles": {
     "value": "Outside Cell Particle Number"
   },
+  "addParticleToMiddleString": {
+    "value": "Add 10 Particle to Middle"
+  },
   "kineticEnergy": {
     "value": "Kinetic Energy"
   },

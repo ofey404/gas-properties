@@ -42,7 +42,7 @@ class LeakageScreenView extends BaseScreenView {
 
     const obstacleNode = new ObstacleNode( model.container, model.modelViewTransform, {} );
 
-    const controlPanel = new LeakageControlPanel( model.settings,
+    const controlPanel = new LeakageControlPanel( model,
        model.modelViewTransform,
        model.numberOfParticlesProperty, {
         fixedWidth: 300,

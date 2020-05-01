@@ -10,7 +10,6 @@ import gasProperties from '../../gasProperties';
 import FixedWidthNode from '../../common/view/FixedWidthNode';
 import VBox from '../../../../scenery/js/nodes/VBox';
 import HSeparator from '../../../../sun/js/HSeparator';
-import LeakageSettings from '../model/LeakageSettings';
 import Property from '../../../../axon/js/Property';
 import merge from '../../../../phet-core/js/merge';
 import Tandem from '../../../../tandem/js/Tandem';
@@ -18,21 +17,26 @@ import GasPropertiesConstants from '../../common/GasPropertiesConstants';
 import GasPropertiesColorProfile from '../../common/GasPropertiesColorProfile';
 import LeakageSpinnerNode from './LeakageSpinnerNode';
 import gasPropertiesStrings from '../../gasPropertiesStrings';
+import TextPushButton from '../../../../sun/js/buttons/TextPushButton.js';
+import LeakageModel from '../model/LeakageModel';
+import PhetFont from '../../../../scenery-phet/js/PhetFont';
+
 
 const vacuumCellNumberOfParticleString = gasPropertiesStrings.vacuumCellNumberOfParticles;
 const outsideCellNumberOfParticleString = gasPropertiesStrings.outsideCellNumberOfParticles;
+const addParticleToMiddleString = gasPropertiesStrings.addParticleToMiddleString;
 
 class LeakageControlPanel extends Panel {
   /**
-   * @param {LeakageSettings} settings
+   * @param {LeakageModel} model
    * @param {ModelViewTransform2} modelViewTransform
    * @param {Property.<number>} numberOfParticlesProperty
    * @param {Object} [options]
    */
 
-  constructor( settings, modelViewTransform, numberOfParticlesProperty, options ) {
-    assert && assert( settings instanceof LeakageSettings,
-      `invalid settings: ${settings}` );
+  constructor( model, modelViewTransform, numberOfParticlesProperty, options ) {
+    assert && assert( model instanceof LeakageModel,
+      `invalid model: ${model}` );
     assert && assert( numberOfParticlesProperty instanceof Property,
       `invalid numberOfParticlesProperty: ${numberOfParticlesProperty}` );
 
@@ -53,9 +57,16 @@ class LeakageControlPanel extends Panel {
 
         // Spinner of vaccum cell number of particles.
         new LeakageSpinnerNode(
-          settings.vacuumCellNumberProperty,
+          model.settings.vacuumCellNumberProperty,
           modelViewTransform,
           vacuumCellNumberOfParticleString
+        ),
+        
+        // Spinner of outside cell number of particles.
+        new LeakageSpinnerNode(
+          model.settings.outsideCellNumberProperty,
+          modelViewTransform,
+          outsideCellNumberOfParticleString
         ),
 
         // ------------
@@ -64,12 +75,14 @@ class LeakageControlPanel extends Panel {
           maxWidth: contentWidth
         } ),
 
-        // Spinner of outside cell number of particles.
-        new LeakageSpinnerNode(
-          settings.outsideCellNumberProperty,
-          modelViewTransform,
-          outsideCellNumberOfParticleString
-        )
+        new TextPushButton( addParticleToMiddleString, {
+          font: new PhetFont( 16 ),
+          baseColor: 'yellow',
+          xMargin: 10,
+          listener: () => {
+            model.addParticlesToMiddleBound( 10 );
+          }
+        } )
       ]
     } ) );
 

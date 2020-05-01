@@ -66,6 +66,13 @@ class LeakageModel extends BaseModel {
       this.container.bounds.maxY
     );
 
+    this.middleCellBounds = new Bounds2(
+      this.container.bounds.minX + this.container.bounds.width / 3,
+      this.container.bounds.minY,
+      this.container.bounds.maxX - this.container.bounds.width / 3,
+      this.container.bounds.maxY
+    );
+
     this.settings.vacuumCellNumberProperty.link( numberOfParticles => {
       this.updateNumberOfParticles( numberOfParticles,
         this.vaccumCellBounds,
@@ -96,6 +103,20 @@ class LeakageModel extends BaseModel {
         tandem: tandem.createTandem( 'numberOfParticlesProperty' ),
         phetioDocumentation: 'total number of particles in the container'
       } );
+  }
+
+  /**
+   * Add n particle to middle bounds.
+   * 
+   * @param {number} number 
+   */
+  addParticlesToMiddleBound( number ) {
+    addParticles( number,
+      this.middleCellBounds,
+      this.settings,
+      this.particles,
+      this.createLeakageParticle,
+      this.container.obstacleArray );
   }
 
   /**
